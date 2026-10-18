@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HealthSync AI – Hospital Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f1f5f9;--sf:#fff;--tx:#0f172a;--mu:#64748b;--bd:#e2e8f0;--pr:#2563eb;--ok:#10b981;--wr:#f59e0b;--er:#ef4444;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f172a;--sf:#1e293b;--tx:#f8fafc;--mu:#94a3b8;--bd:#334155;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f172a;--sf:#1e293b;--tx:#f8fafc;--mu:#94a3b8;--bd:#334155;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);display:flex}
+.sb{width:230px;background:var(--sf);border-right:1px solid var(--bd);padding:20px 14px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.sb h2{margin:0 0 16px;font-size:1.2rem;color:var(--pr)}
+.sb button{all:unset;cursor:pointer;padding:11px 12px;border-radius:9px;color:var(--mu);font-weight:500;font-size:.93rem}
+.sb button:hover{background:var(--bg)}.sb button.on{background:var(--pr);color:#fff}
+main{flex:1;overflow-y:auto;padding:24px;min-width:0}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.hd h1{margin:0;font-size:1.5rem}.hd p{margin:4px 0 0;color:var(--mu);font-size:.9rem}
+input,select{padding:10px 14px;border-radius:9px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font:inherit}
+.g{display:grid;gap:16px}.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:16px}
+.g2{grid-template-columns:2fr 1fr}
+.c{background:var(--sf);border:1px solid var(--bd);border-radius:14px;padding:18px;min-width:0}
+.c h3{margin:0 0 12px;font-size:1rem}.c small{color:var(--mu)}
+.v{font-size:1.9rem;font-weight:700;margin:6px 0}
+.up{color:var(--ok)}.dn{color:var(--er)}
+.btn{cursor:pointer;border:0;border-radius:8px;padding:8px 12px;background:var(--pr);color:#fff;font:inherit;font-size:.85rem}
+.btn.o{background:transparent;color:var(--pr);border:1px solid var(--pr)}.btn.r{background:var(--er)}.btn.k{background:var(--ok)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}th{color:var(--mu);font-weight:600}
+.tag{padding:3px 9px;border-radius:20px;font-size:.75rem;font-weight:600}
+.Critical{background:#fee2e2;color:#b91c1c}.Urgent{background:#fef3c7;color:#b45309}.Routine{background:#dcfce7;color:#15803d}
+.beds{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.bed{padding:12px 4px;text-align:center;border-radius:9px;font-size:.8rem;font-weight:600;cursor:pointer;border:1px solid var(--bd)}
+.bed.s{outline:3px solid var(--pr)}.bed.f{background:#fee2e2;color:#b91c1c}.bed.a{background:#dcfce7;color:#15803d}
+.chat{height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.m{padding:9px 12px;border-radius:12px;max-width:85%;font-size:.88rem}.m.u{background:var(--pr);color:#fff;align-self:flex-end}.m.b{background:var(--bg)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row input{flex:1;min-width:120px}
+.al{padding:10px;border-left:4px solid var(--wr);background:var(--bg);border-radius:6px;margin-bottom:8px;font-size:.86rem}
+.al.e{border-color:var(--er)}
+.pg{display:none}.pg.on{display:block}
+@media(max-width:800px){body{flex-direction:column}.sb{width:100%;flex-direction:row;overflow-x:auto;padding:10px}.sb h2{display:none}.sb button{white-space:nowrap}.g2{grid-template-columns:1fr}}
+</style></head><body>
+<nav class="sb"><h2>❤ HealthSync AI</h2>
+<button class="on" data-p="d">Dashboard</button><button data-p="q">Patient Queue</button>
+<button data-p="b">ICU Beds</button><button data-p="a">AI Assistant</button><button data-p="s">Alerts</button></nav>
+<main>
+<div class="hd"><div><p id="dt" style="font-size:1rem;margin:0"></p></div>
+<input id="srch" placeholder="Search patients…"></div>
+
+<section class="pg on" id="d">
+<div class="g g4">
+<div class="c"><small>OPD waiting</small><div class="v" id="s1">0</div><small class="up">↓ 15% via AI triage</small></div>
+<div class="c"><small>ICU beds free</small><div class="v" id="s2">0</div><small id="s2n"></small></div>
+<div class="c"><small>Discharged today</small><div class="v" id="s3">0</div><small class="up">↑ 40% faster processing</small></div>
+<div class="c"><small>Critical patients</small><div class="v dn" id="s4">0</div><small>Need immediate attention</small></div></div>
+<div class="g g2"><div class="c"><h3>Patient flow today</h3><canvas id="ch" height="120"></canvas></div>
+<div class="c"><h3>Quick actions</h3><div class="g">
+<button class="btn" onclick="addP()">+ Register patient</button>
+<button class="btn o" onclick="go('q')">Open queue</button>
+<button class="btn o" onclick="go('b')">Manage ICU beds</button>
+<button class="btn o" onclick="handover()">Generate shift handover</button>
+<pre id="ho" style="white-space:pre-wrap;font:inherit;font-size:.82rem;margin:0"></pre></div></div></div>
+</section>
+
+<section class="pg" id="q"><div class="c"><h3>Live patient queue</h3>
+<div class="row" style="margin-bottom:12px"><input id="nm" placeholder="Patient name"><input id="cp" placeholder="Complaint">
+<select id="pr"><option>Routine</option><option>Urgent</option><option>Critical</option></select>
+<button class="btn" onclick="addP()">Add</button></div>
+<div class="tw"><table><thead><tr><th>Token</th><th>Name</th><th>Complaint</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead><tbody id="tb"></tbody></table></div></div></section>
+
+<section class="pg" id="b"><div class="c"><h3>ICU bed management <small>(click a bed for patient details)</small></h3><div class="beds" id="bd"></div></div><div id="bdet"></div></section>
+
+<section class="pg" id="a"><div class="c"><h3>AI triage assistant</h3><div class="chat" id="ct"></div>
+<div class="row"><input id="ci" placeholder="Describe symptoms e.g. chest pain, fever…"><button class="btn" onclick="ask()">Send</button></div>
+<small>Prototype: rule-based demo. Phase 2 integrates a live LLM API.</small></div></section>
+
+<section class="pg" id="s"><div class="c"><h3>System alerts</h3><div id="al"></div></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let P=[{n:"Ramesh Verma",c:"Chest pain",p:"Critical",s:"Waiting"},{n:"Sunita Devi",c:"High fever",p:"Urgent",s:"Waiting"},{n:"Amit Patel",c:"Follow-up",p:"Routine",s:"Waiting"},{n:"Neha Gupta",c:"Migraine",p:"Routine",s:"In consult"},{n:"Imran Khan",c:"Fracture",p:"Urgent",s:"Waiting"}].map((x,i)=>({...x,t:101+i}));
+let sel=-1,F=["Ramesh","Sunita","Amit","Neha","Imran","Pooja","Rohit","Anita","Suresh"],L=["Verma","Devi","Patel","Gupta","Khan","Singh","Yadav","Joshi"],D=["Cardiac arrest recovery","Severe pneumonia","Post-op monitoring","Sepsis","Head trauma","Respiratory failure"],tok=106,disc=18,beds=Array.from({length:20},(_,i)=>i<17?{n:F[i%9]+" "+L[i%8],a:35+(i*7)%40,g:i%3?"M":"F",d:D[i%6],dr:["Dr. Mehta","Dr. Rao","Dr. Iyer"][i%3],days:1+i%6,hr:70+(i*5)%50,bp:(110+(i*3)%40)+"/"+(70+i%15),o:90+i%9,s:i%4==0?"Critical":"Stable"}:null);
+let flow=[12,28,45,32,24,15];
+$('dt').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+function go(p){document.querySelectorAll('.pg').forEach(e=>e.classList.toggle('on',e.id==p));document.querySelectorAll('.sb button').forEach(b=>b.classList.toggle('on',b.dataset.p==p))}
+document.querySelectorAll('.sb button').forEach(b=>b.onclick=()=>go(b.dataset.p));
+const ord={Critical:0,Urgent:1,Routine:2};
+function render(){
+ const f=$('srch').value.toLowerCase();
+ const L=P.filter(x=>(x.n+x.c).toLowerCase().includes(f)).sort((a,b)=>ord[a.p]-ord[b.p]||a.t-b.t);
+ $('tb').innerHTML=L.map(x=>`<tr><td>#${x.t}</td><td>${x.n}</td><td>${x.c}</td><td><span class="tag ${x.p}">${x.p}</span></td><td>${x.s}</td><td>${x.s=="Waiting"?`<button class="btn" onclick="st(${x.t},'In consult')">Call in</button>`:`<button class="btn k" onclick="dis(${x.t})">Discharge</button>`} <button class="btn r" onclick="dis(${x.t},1)">✕</button></td></tr>`).join("")||'<tr><td colspan=6>No patients found</td></tr>';
+ const free=beds.filter(b=>!b).length,crit=P.filter(x=>x.p=="Critical").length;
+ $('s1').textContent=P.filter(x=>x.s=="Waiting").length;$('s2').textContent=free+" / 20";
+ $('s2').className="v "+(free<4?"dn":"up");$('s2n').textContent=free<4?"⚠ Critical capacity":"Capacity OK";
+ $('s3').textContent=disc;$('s4').textContent=crit;
+ $('bd').innerHTML=beds.map((b,i)=>`<div class="bed ${b?'f':'a'}${i==sel?' s':''}" onclick="selBed(${i})">ICU ${i+1}<br>${b?'Occupied':'Free'}</div>`).join("");
+ const A=[];if(free<4)A.push(["e",`ICU capacity critical: only ${free} bed(s) free`]);
+ if(crit)A.push(["e",`${crit} critical patient(s) in queue`]);
+ const w=P.filter(x=>x.s=="Waiting").length;if(w>5)A.push(["",`OPD congestion: ${w} waiting`]);
+ $('al').innerHTML=A.map(a=>`<div class="al ${a[0]}">${a[1]}</div>`).join("")||'<div class="al">All systems normal ✔</div>';
+ flow[5]=15+P.length;bedDet();if(window.C){C.data.datasets[0].data=flow;C.update()}
+}
+function selBed(i){sel=i;render()}
+function bedOut(){if(beds[sel])disc++;beds[sel]=null;render()}
+function admit(){beds[sel]={n:$('an').value.trim()||"New patient",a:40,g:"M",d:$('ad').value.trim()||"Under observation",dr:"Dr. Mehta",days:0,hr:88,bp:"120/80",o:97,s:"Stable"};render()}
+function bedDet(){const e=$('bdet'),b=beds[sel];if(sel<0){e.innerHTML="";return}
+e.innerHTML=b?`<div class="c" style="margin-top:16px"><h3>ICU ${sel+1} · ${b.n} <span class="tag ${b.s=='Critical'?'Critical':'Routine'}">${b.s}</span></h3><div class="tw"><table><tbody><tr><th>Age / Sex</th><td>${b.a} / ${b.g}</td><th>Diagnosis</th><td>${b.d}</td></tr><tr><th>Doctor</th><td>${b.dr}</td><th>Admitted</th><td>${b.days} day(s) ago</td></tr><tr><th>Heart rate</th><td>${b.hr} bpm</td><th>BP</th><td>${b.bp}</td></tr><tr><th>SpO₂</th><td>${b.o}%</td><th></th><td></td></tr></tbody></table></div><button class="btn k" style="margin-top:12px" onclick="bedOut()">Discharge from ICU</button></div>`:`<div class="c" style="margin-top:16px"><h3>ICU ${sel+1} · Free</h3><div class="row"><input id="an" placeholder="Patient name"><input id="ad" placeholder="Diagnosis"><button class="btn" onclick="admit()">Admit</button></div></div>`}
+function st(t,s){P.find(x=>x.t==t).s=s;render()}
+function dis(t,rm){P=P.filter(x=>x.t!=t);if(!rm)disc++;render()}
+function addP(){const n=$('nm').value.trim()||"Walk-in patient";P.push({t:tok++,n,c:$('cp').value.trim()||"General checkup",p:$('pr').value,s:"Waiting"});$('nm').value=$('cp').value="";go('q');render()}
+function handover(){$('ho').textContent=`SHIFT HANDOVER – ${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}\nWaiting: ${P.filter(x=>x.s=="Waiting").length} | In consult: ${P.filter(x=>x.s!="Waiting").length}\nCritical: ${P.filter(x=>x.p=="Critical").map(x=>x.n).join(", ")||"none"}\nICU free: ${beds.filter(b=>!b).length}/20 | Discharged: ${disc}`}
+function say(t,c){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('ct').appendChild(d);$('ct').scrollTop=1e5}
+function ask(){const q=$('ci').value.trim();if(!q)return;$('ci').value="";say(q,'u');const l=q.toLowerCase();
+ if(/icu|bed/.test(l)){say(`ICU: ${beds.filter(b=>!b).length} of 20 beds free, ${beds.filter(b=>b&&b.s=="Critical").length} patients critical.`,'b');return}
+ if(/queue|waiting|opd/.test(l)){say(`${P.filter(x=>x.s=="Waiting").length} patients waiting, ${P.filter(x=>x.p=="Critical").length} critical.`,'b');return}
+ let p="Routine",r="Book a general OPD slot.";
+ if(/chest|breath|saans|stroke|unconscious|behosh|bleed|khoon|seene/.test(l)){p="Critical";r="Send to emergency immediately."}
+ else if(/fever|bukhar|fracture|vomit|ulti|pain|dard|injur|chot/.test(l)){p="Urgent";r="Prioritise for doctor review within 30 min."}
+ say(`Triage level: ${p}. ${r}`,'b');
+ const o=document.createElement('button');o.className='btn';o.textContent='Add to queue as '+p;o.onclick=()=>{P.push({t:tok++,n:"AI-triaged patient",c:q.slice(0,30),p,s:"Waiting"});render();o.remove()};$('ct').appendChild(o)}
+$('ci').onkeydown=e=>e.key=="Enter"&&ask();$('srch').oninput=()=>{go('q');render()};
+say("Hello Doctor, describe a patient's symptoms and I will suggest a triage level.",'b');
+if(window.Chart)window.C=new Chart($('ch'),{type:'line',data:{labels:['8 AM','10 AM','12 PM','2 PM','4 PM','6 PM'],datasets:[{label:'Registrations',data:flow,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.15)',fill:true,tension:.4}]},options:{responsive:true}});
+render();
+</script></body></html>
